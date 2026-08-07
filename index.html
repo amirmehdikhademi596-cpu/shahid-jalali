@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>تیم فوتبال شهید جلالی</title>
+
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+
+<img src="logo.jpg" class="logo">
+
+<h1>تیم فوتبال شهید جلالی</h1>
+
+<p>قدرت | اتحاد | افتخار</p>
+
+</header>
+
+<nav>
+
+<a href="#home">خانه</a>
+
+<a href="#players">بازیکنان</a>
+
+<a href="#news">اخبار</a>
+
+<a href="#results">نتایج</a>
+
+<a href="#training">تمرینات</a>
+
+<a href="dashboard.html">پنل مدیریت</a>
+
+</nav>
+
+<section id="home">
+
+<h2>به سایت رسمی تیم فوتبال شهید جلالی خوش آمدید</h2>
+
+<div class="card">
+
+<p>
+
+آخرین اخبار، بازیکنان، نتایج مسابقات و برنامه تمرینات تیم را در این سایت مشاهده کنید.
+
+</p>
+
+</div>
+
+</section>
+
+<section id="players">
+
+<h2>بازیکنان</h2>
+
+<div id="playersList"></div>
+
+</section>
+
+<section id="news">
+
+<h2>اخبار تیم</h2>
+
+<div id="newsList"></div>
+
+</section>
+
+<section id="results">
+
+<h2>نتایج مسابقات</h2>
+
+<div class="card">
+
+هنوز نتیجه‌ای ثبت نشده است.
+
+</div>
+
+</section>
+
+<section id="training">
+
+<h2>برنامه تمرینات</h2>
+
+<div class="card">
+
+شنبه 17:30 تا 19:30
+
+<hr><br>
+
+دوشنبه 17:30 تا 19:30
+
+</div>
+
+</section>
+
+<footer>
+
+تمامی حقوق این سایت متعلق به تیم فوتبال شهید جلالی است.
+
+</footer>
+
+<script>
+
+let players = JSON.parse(localStorage.getItem("players")) || [];
+
+let playersHTML = "";
+
+if(players.length==0){
+
+playersHTML="<div class='card'>هنوز بازیکنی ثبت نشده است.</div>";
+
+}else{
+
+for(let i=0;i<players.length;i++){
+
+playersHTML += `
+
+<div class="card player">
+
+<img src="${players[i].image}">
+
+<div class="player-info">
+
+<h3>${players[i].name}</h3>
+
+<p>شماره ${players[i].number}</p>
+
+<p>${players[i].position}</p>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+}
+
+document.getElementById("playersList").innerHTML=playersHTML;
+
+let news = JSON.parse(localStorage.getItem("news")) || [];
+
+let newsHTML="";
+
+if(news.length==0){
+
+newsHTML="<div class='card'>هنوز خبری ثبت نشده است.</div>";
+
+}else{
+
+for(let i=0;i<news.length;i++){
+
+newsHTML += `
+
+<div class="card news">
+
+<img src="${news[i].image}">
+
+<h3>${news[i].title}</h3>
+
+<p>${news[i].text}</p>
+
+</div>
+
+`;
+
+}
+
+}
+
+document.getElementById("newsList").innerHTML=newsHTML;
+
+</script>
+
+</body>
+
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>پنل مدیریت</title>
+
+<link rel="stylesheet" href="admin.css">
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>⚙ پنل مدیریت تیم فوتبال شهید جلالی</h1>
+
+<hr>
+
+<h2>➕ افزودن بازیکن</h2>
+
+<input type="text" id="playerName" placeholder="نام بازیکن">
+
+<input type="number" id="playerNumber" placeholder="شماره پیراهن">
+
+<input type="text" id="playerPosition" placeholder="پست بازیکن">
+
+<input type="file" id="playerImage" accept="image/*">
+
+<button onclick="addPlayer()">ثبت بازیکن</button>
+
+<div id="players"></div>
+
+<hr>
+
+<h2>📰 افزودن خبر</h2>
+
+<input type="text" id="newsTitle" placeholder="عنوان خبر">
+
+<textarea id="newsText" placeholder="متن خبر"></textarea>
+
+<input type="file" id="newsImage" accept="image/*">
+
+<button onclick="addNews()">ثبت خبر</button>
+
+<div id="news"></div>
+
+<br><br>
+
+<a href="index.html">
+
+<button>🏠 مشاهده سایت</button>
+
+</a>
+
+</div>
+
+<script src="admin.js"></script>
+
+</body>
+
+</html>
