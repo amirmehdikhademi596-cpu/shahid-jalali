@@ -103,7 +103,381 @@
 تمامی حقوق این سایت متعلق به تیم فوتبال شهید جلالی است.
 
 </footer>
+/* =====================================================
+   آپلود آسان فایل به Supabase Storage
+   ===================================================== */
 
+const STORAGE_BUCKET = "images";
+
+async function uploadToSupabase(file, folder) {
+  if (!file) return "";
+
+  const maxSize = 100 * 1024 * 1024; // 100MB
+
+  if (file.size > maxSize) {
+    throw new Error("حجم فایل بیشتر از 100 مگابایت است.");
+  }
+
+  const safeName = file.name
+    .replace(/[^\w.\-]+/g, "-")
+    .toLowerCase();
+
+  const fileName =
+    folder +
+    "/" +
+    Date.now() +
+    "-" +
+    Math.random().toString(36).substring(2, 9) +
+    "-" +
+    safeName;
+
+  const uploadUrl =
+    SUPABASE_URL +
+    "/storage/v1/object/" +
+    STORAGE_BUCKET +
+    "/" +
+    fileName;
+
+  const response = await fetch(uploadUrl, {
+    method: "POST",
+    headers: {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY,
+      "Content-Type": file.type || "application/octet-stream",
+      "x-upsert": "false"
+    },
+    body: file
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error("آپلود فایل ناموفق بود: " + text);
+  }
+
+  return (
+    SUPABASE_URL +
+    "/storage/v1/object/public/" +
+    STORAGE_BUCKET +
+    "/" +
+    fileName
+  );
+}
+
+
+/* =====================================================
+   تبدیل فیلدهای لینک به انتخاب فایل
+   ===================================================== */
+
+function makeFileInput(id, accept, label) {
+  const old = document.getElementById(id);
+
+  if (!old) return null;
+
+  old.type = "file";
+  old.accept = accept;
+  old.value = "";
+
+  const parent = old.parentElement;
+
+  const labelElement = parent.querySelector("label");
+
+  if (labelElement) {
+    labelElement.textContent = label;
+  }
+
+  return old;
+}
+
+
+/* =====================================================
+   آماده‌سازی آپلودها
+   ===================================================== */
+
+function prepareUploadInputs() {
+
+  // عکس خبر
+  makeFileInput(
+    "newsImage",
+    "image/*",
+    "🖼️ تصویر خبر را انتخاب کن"
+  );
+
+  // عکس بازیکن
+  makeFileInput(
+    "playerImage",
+    "image/*",
+    "👤 تصویر بازیکن را انتخاب کن"
+  );
+
+  // ویدیوی مسابقه
+  makeFileInput(
+    "videoUrl",
+    "video/*",
+    "🎥 فایل ویدیوی مسابقه را انتخاب کن"
+  );
+
+  // ظاهر بهتر input فایل
+  document.querySelectorAll(
+    '#newsImage, #playerImage, #videoUrl'
+  ).forEach(input => {
+
+    input.style.padding = "12px";
+    input.style.background = "#f0fdf4";
+    input.style.cursor = "pointer";
+
+  });
+}
+
+
+/* =====================================================
+   افزودن خبر با تصویر واقعی
+   ===================================================== */
+
+async function addNews() {
+
+  const title =
+    document.getElementById("newsTitle").value.trim();
+
+  const content =
+    document.getElementById("newsContent").value.trim();
+
+  const imageInput =
+    document.getElementById("newsImage");
+
+  const file =
+    imageInput && imageInput.files
+      ? imageInput.files[0]
+      : null;
+
+  if (!title) {
+    alert("عنوان خبر را وارد کن.");
+    return;
+  }
+
+  try {
+
+    let imageUrl = "";
+
+    if (file) {
+
+      alert("⏳ در حال آپلود تصویر خبر...");
+
+      imageUrl =
+        await uploadToSupabase(
+          file,
+          "news"
+        );
+    }
+
+    await supabaseFetch(
+      "news",
+      {
+        method: "POST",
+
+        body: JSON.stringify({
+          title: title,
+          content: content,
+          image: imageUrl
+        })
+      }
+    );
+
+    document.getElementById("newsTitle").value = "";
+    document.getElementById("newsContent").value = "";
+
+    if (imageInput) {
+      imageInput.value = "";
+    }
+
+    await loadNews();
+    await loadAdminNews();
+
+    alert("✅ خبر با موفقیت منتشر شد.");
+
+  } catch (e) {
+
+    console.error(e);
+
+    alert(
+      "❌ خطا هنگام افزودن خبر:\n\n" +
+      e.message
+    );
+  }
+}
+
+
+/* =====================================================
+   افزودن بازیکن با تصویر واقعی
+   ===================================================== */
+
+async function addPlayer() {
+
+  const name =
+    document.getElementById("playerName").value.trim();
+
+  const number =
+    document.getElementById("playerNumber").value;
+
+  const position =
+    document.getElementById("playerPosition").value;
+
+  const imageInput =
+    document.getElementById("playerImage");
+
+  const file =
+    imageInput && imageInput.files
+      ? imageInput.files[0]
+      : null;
+
+  if (!name || !number) {
+
+    alert("نام و شماره بازیکن را وارد کن.");
+
+    return;
+  }
+
+  try {
+
+    let imageUrl = "";
+
+    if (file) {
+
+      alert("⏳ در حال آپلود تصویر بازیکن...");
+
+      imageUrl =
+        await uploadToSupabase(
+          file,
+          "players"
+        );
+    }
+
+    await supabaseFetch(
+      "players",
+      {
+        method: "POST",
+
+        body: JSON.stringify({
+
+          name: name,
+
+          number: Number(number),
+
+          position: position,
+
+          image: imageUrl
+
+        })
+      }
+    );
+
+    document.getElementById("playerName").value = "";
+    document.getElementById("playerNumber").value = "";
+
+    if (imageInput) {
+      imageInput.value = "";
+    }
+
+    await loadPlayers();
+    await loadAdminPlayers();
+
+    alert("✅ بازیکن با موفقیت اضافه شد.");
+
+  } catch (e) {
+
+    console.error(e);
+
+    alert(
+      "❌ خطا هنگام افزودن بازیکن:\n\n" +
+      e.message
+    );
+  }
+}
+
+
+/* =====================================================
+   افزودن ویدیوی واقعی
+   ===================================================== */
+
+async function addVideo() {
+
+  const title =
+    document.getElementById("videoTitle").value.trim();
+
+  const videoInput =
+    document.getElementById("videoUrl");
+
+  const file =
+    videoInput && videoInput.files
+      ? videoInput.files[0]
+      : null;
+
+  if (!title) {
+
+    alert("عنوان ویدیو را وارد کن.");
+
+    return;
+  }
+
+  if (!file) {
+
+    alert("فایل ویدیو را انتخاب کن.");
+
+    return;
+  }
+
+  try {
+
+    alert("⏳ در حال آپلود ویدیو...");
+
+    const videoUrl =
+      await uploadToSupabase(
+        file,
+        "videos"
+      );
+
+    await supabaseFetch(
+      "videos",
+      {
+        method: "POST",
+
+        body: JSON.stringify({
+
+          title: title,
+
+          url: videoUrl
+
+        })
+      }
+    );
+
+    document.getElementById("videoTitle").value = "";
+
+    if (videoInput) {
+      videoInput.value = "";
+    }
+
+    await loadVideos();
+    await loadAdminVideos();
+
+    alert("✅ ویدیو با موفقیت اضافه شد.");
+
+  } catch (e) {
+
+    console.error(e);
+
+    alert(
+      "❌ خطا هنگام آپلود ویدیو:\n\n" +
+      e.message
+    );
+  }
+}
+
+
+/* =====================================================
+   شروع سیستم آپلود
+   ===================================================== */
+
+prepareUploadInputs();
 <script>
 
 let players = JSON.parse(localStorage.getItem("players")) || [];
