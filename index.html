@@ -337,8 +337,7 @@ footer{background:#020a05;color:#aab6ae;padding:42px 18px}
 let currentSlide = 0;
 let sliderTimer = null;
 
-async function loadSliderNews() {
-
+async function async function loadSliderNews() {
   const slidesBox = document.getElementById("sliderSlides");
   const dotsBox = document.getElementById("sliderDots");
   const loading = document.getElementById("sliderLoading");
@@ -346,120 +345,104 @@ async function loadSliderNews() {
   if (!slidesBox) return;
 
   try {
-
     const response = await supabaseFetch(
       "news?select=id,title,content,image,created_at&order=created_at.desc&limit=10"
     );
 
-    if (!response || response.length === 0) {
+    if (loading) {
       loading.style.display = "none";
+    }
 
+    if (!response || response.length === 0) {
       slidesBox.innerHTML = `
         <div class="slider-empty">
           هنوز خبری ثبت نشده است.
         </div>
       `;
 
+      if (dotsBox) dotsBox.innerHTML = "";
       return;
     }
 
-    /*
-      فقط خبرهایی که واقعاً عکس دارند
-      وارد اسلایدر می‌شوند.
-    */
-
-    const newsWithImages = response.filter(
-      news =>
+    const newsWithImages = response.filter(news => {
+      return (
         news.image &&
         typeof news.image === "string" &&
         news.image.trim() !== ""
-    );
-
-    loading.style.display = "none";
+      );
+    });
 
     if (newsWithImages.length === 0) {
-
       slidesBox.innerHTML = `
         <div class="slider-empty">
           هنوز خبر تصویری ثبت نشده است.
         </div>
       `;
 
+      if (dotsBox) dotsBox.innerHTML = "";
       return;
     }
 
-    slidesBox.innerHTML = newsWithImages.map(
-      (news, index) => `
+    slidesBox.innerHTML = newsWithImages.map((news, index) => {
+      const image = escapeSliderText(news.image);
+      const title = escapeSliderText(news.title || "");
+      const content = escapeSliderText(news.content || "");
 
+      return `
         <div class="slider-slide ${index === 0 ? "active" : ""}">
-
+          
           <img
-            src="${escapeSliderText(news.image)}"
-            alt="${escapeSliderText(news.title)}"
-            onerror="this.style.display='none';"
+            src="${image}"
+            alt="${title}"
+            loading="${index === 0 ? "eager" : "lazy"}"
+            onerror="this.parentElement.classList.add('image-error');"
           >
 
           <div class="slider-overlay">
-
-            <h2>
-              ${escapeSliderText(news.title)}
-            </h2>
-
-            <p>
-              ${escapeSliderText(news.content || "")}
-            </p>
-
+            <h2>${title}</h2>
+            <p>${content}</p>
           </div>
 
         </div>
-      `
-    ).join("");
+      `;
+    }).join("");
 
-    dotsBox.innerHTML = newsWithImages.map(
-      (_, index) => `
-        <button
-          class="slider-dot ${index === 0 ? "active" : ""}"
-          onclick="showSlide(${index})">
-        </button>
-      `
-    ).join("");
+    if (dotsBox) {
+      dotsBox.innerHTML = newsWithImages.map((_, index) => {
+        return `
+          <button
+            class="slider-dot ${index === 0 ? "active" : ""}"
+            onclick="showSlide(${index})"
+            aria-label="اسلاید ${index + 1}">
+          </button>
+        `;
+      }).join("");
+    }
 
     currentSlide = 0;
 
+    showSlide(0);
     startSlider();
 
   } catch (error) {
 
     console.error("Slider error:", error);
 
-    loading.style.display = "none";
+    if (loading) {
+      loading.style.display = "none";
+    }
 
     slidesBox.innerHTML = `
       <div class="slider-empty">
         خطا در بارگذاری اخبار
       </div>
     `;
+
+    if (dotsBox) {
+      dotsBox.innerHTML = "";
+    }
   }
 }
-
-
-function escapeSliderText(text) {
-
-  if (text === null || text === undefined) {
-    return "";
-  }
-
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-
-function showSlide(index) {
-
   const slides =
     document.querySelectorAll(".slider-slide");
 
